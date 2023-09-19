@@ -1,6 +1,7 @@
 const User = require('../models/User');
 
 module.exports = {
+  // Get all users
   async getUsers(req, res) {
     try {
       const users = await User.find();
@@ -9,6 +10,7 @@ module.exports = {
       res.status(500).json(err);
     }
   },
+  // Get Single user
   async getSingleUser(req, res) {
     try {
       const user = await User.findOne({ _id: req.params.userId })
@@ -23,7 +25,7 @@ module.exports = {
       res.status(500).json(err);
     }
   },
-  // create a new user
+  // Create a new user
   async createUser(req, res) {
     try {
       const dbUserData = await User.create(req.body);
@@ -32,4 +34,25 @@ module.exports = {
       res.status(500).json(err);
     }
   },
+  // Update User
+  async updateUser(req, res) {
+    try {
+      const updatedUser = await User.findOneAndUpdate(
+        {username: req.params.userId},
+        {username: req.body.username}
+      )
+      res.status(200).json(updatedUser)
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  },
+  // Delete a User
+  async deleteUser(req, res) {
+    try {
+      const deletedUser = await User.findOneAndDelete({username: req.params.userId});
+      res.status(200).json(deletedUser)
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
 };
