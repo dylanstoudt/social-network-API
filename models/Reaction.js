@@ -11,7 +11,7 @@ const responseSchema = new Schema(
       required: true,
       maxlength: 280,
     },
-    username: {
+    userName: {
       type: String,
       required: true,
     },

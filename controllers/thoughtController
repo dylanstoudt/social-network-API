@@ -1,10 +1,15 @@
 const Thought = require('../models/Thought');
+const User = require('../models/User');
 
 module.exports = {
   // Get all thoughts
   async getThoughts(req, res) {
     try {
-      const thoughts = await Thought.find();
+      const thoughts = await Thought.find()
+        .populate({
+          path: 'reactions',
+          select: '-__v'
+        });
       res.json(thoughts);
     } catch (err) {
       res.status(500).json(err);
@@ -14,12 +19,14 @@ module.exports = {
   async getSingleThought(req, res) {
     try {
       const thought = await Thought.findOne({ _id: req.params.thoughtId })
+        .populate({
+          path: 'reactions',
+          select: '-__v'
+        })
         .select('-__v');
-
       if (!thought) {
         return res.status(404).json({ message: 'No thought with that ID' });
       }
-
       res.json(thought);
     } catch (err) {
       res.status(500).json(err);
@@ -29,10 +36,10 @@ module.exports = {
   async createThought(req, res) {
     try {
       const dbThoughtData = await Thought.create(req.body);
-      console.log(dbThoughtData);
       const updatedUser = await User.findOneAndUpdate(
-        {_id: req.body.userId},
-        { $addToSet: thoughts}
+        { _id: req.body.userId },
+        { $addToSet: { thoughts: dbThoughtData._id }},
+        { new: true }
       )
       res.json(dbThoughtData);
     } catch (err) {
@@ -43,10 +50,11 @@ module.exports = {
   async updateThought(req, res) {
     try {
       const updatedThought = await Thought.findOneAndUpdate(
-        {thoughtText: req.params.thoughtId},
-        {thoughtText: req.body}
-      )
-      res.status(200).json(updatedThought)
+        { _id: req.params.thoughtId },
+        { thoughtText: req.body.thoughtText },
+        { new: true, runValidators: true }
+      );
+      res.status(200).json(updatedThought);
     } catch (error) {
       res.status(500).json(error);
     }
@@ -54,10 +62,40 @@ module.exports = {
   // Delete a Thought
   async deleteThought(req, res) {
     try {
-      const deletedThought = await Thought.findOneAndDelete({username: req.params.thoughtId});
+      const deletedThought = await Thought.findOneAndDelete(req.params.thoughtId);
       res.status(200).json(deletedThought)
     } catch (error) {
       res.status(500).json(error);
     }
-  }
+  },
+  // Create Reaction
+  async createReaction(req, res) {
+    try {
+      const createdReaction = await Thought.findOneAndUpdate(
+        { _id: params.thoughtId },
+        { $push: { reactions: req.body } },
+        { new: true, runValidators: true })
+        .populate({
+          path: 'reactions',
+          select: '-__v'
+        })
+        .select('-__v')
+        .then(res.status(200).json(createdReaction))
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  },
+  // Delete Reaction
+  async deleteReaction(req, res) {
+    try {
+      const deletedReaction = await Thought.findOneAndDelete(
+        {_id: req.params.thoughtId},
+        { $pull: {ractions: {reactionId: req.params.reactionId}}},
+        {new: true}
+        ) 
+        .then(res.status(200).json(deletedReaction))
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  },
 };
